@@ -3,3 +3,13 @@ uvicorn
 pandas
 python-multipart
 flask
+keybert
+sentence-transformers
+beautifulsoup4
+httpx
+scikit-learn
+flair
+skillNer
+ipython
+spacy
+PyMuPDF
