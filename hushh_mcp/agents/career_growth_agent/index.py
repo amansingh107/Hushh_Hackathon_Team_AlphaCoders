@@ -1,3 +1,4 @@
+import asyncio
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from hushh_mcp.agents.career_growth_agent.career import CareerGrowthAgent
 from hushh_mcp.consent.token import issue_token
@@ -105,8 +106,14 @@ async def recommend_courses(user_id: str = Form(...)):
     for skill in skill_gaps:
         try:
             yt = await fetch_youtube_courses(skill, job_title)
+            await asyncio.sleep(1.5)  # delay to avoid rate limit
+
             coursera = await fetch_coursera_courses(skill, job_title)
+            await asyncio.sleep(1.5)  # delay to avoid rate limit
+
             udemy = await fetch_udemy_courses(skill, job_title)
+            await asyncio.sleep(1.5)  # delay to avoid rate limit
+
             all_courses.extend(yt + coursera + udemy)
         except Exception as e:
             print(f"Failed to fetch courses for {skill}: {str(e)}")
