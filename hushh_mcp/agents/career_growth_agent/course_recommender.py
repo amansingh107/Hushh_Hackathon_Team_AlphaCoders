@@ -157,3 +157,6 @@ async def fetch_all_courses(skill_gaps: List[str], total_limit: int = 15) -> Lis
                 break
 
     return all_courses
+
+
+#https://chatgpt.com/share/6883d6b1-5cb4-800b-bbf3-7b37599e9453
