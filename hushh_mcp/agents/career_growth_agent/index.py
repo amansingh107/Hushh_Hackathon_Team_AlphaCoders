@@ -1,17 +1,21 @@
 import asyncio
+from typing import List
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from hushh_mcp.agents.career_growth_agent.career import CareerGrowthAgent
 from hushh_mcp.consent.token import issue_token
 from hushh_mcp.types import ConsentScope
 from .linkedin import parse_linkedin_zip
-from .job_fetcher import fetch_job_descriptions
 from .skills_gap import extract_job_skills_from_postings, compute_skill_gaps
-from .course_recommender import fetch_youtube_courses, fetch_coursera_courses, fetch_udemy_courses
+from .course_recommender import fetch_coursera_courses, fetch_udemy_courses , fetch_all_courses
 from .resume import parse_resume
 from .github import parse_github_repo
 from ...constants import ConsentScope
 import os
 import tempfile
+from fastapi import FastAPI, Form, HTTPException
+import asyncio
+from .job_recommender import fetch_combined_jobs
+from .job_fetcher import fetch_job_descriptions
 
 app = FastAPI()
 
@@ -74,7 +78,7 @@ async def analyze_skill_gap(user_id: str = Form(...), job_title: str = Form(...)
     
     user_skills = USER_SKILL_DB[user_id]["skills"]
 
-    # Fetch real-time job descriptions and extract job skill demands
+  # Fetch real-time job descriptions and extract job skill demands
     print("Fetching job descriptions for:", job_title)
     descriptions = await fetch_job_descriptions(job_title)
     print(f"Fetched {len(descriptions)} job descriptions.")
@@ -94,30 +98,33 @@ async def analyze_skill_gap(user_id: str = Form(...), job_title: str = Form(...)
         "skill_gaps": list(skill_gaps)
     }
 
+
 @app.post("/recommend_courses/")
 async def recommend_courses(user_id: str = Form(...)):
-    if user_id not in USER_SKILL_DB or "job_title" not in USER_SKILL_DB[user_id]:
-        raise HTTPException(status_code=404, detail="Missing user or job title data.")
+    if user_id not in USER_SKILL_DB or "skill_gaps" not in USER_SKILL_DB[user_id]:
+        raise HTTPException(status_code=404, detail="Missing user or skill gap data.")
 
-    skill_gaps = USER_SKILL_DB[user_id]["skill_gaps"]
-    job_title = USER_SKILL_DB[user_id]["job_title"]
-    all_courses = []
+    skill_gaps: List[str] = list(USER_SKILL_DB[user_id]["skill_gaps"])[:20]
 
-    for skill in skill_gaps:
-        try:
-            yt = await fetch_youtube_courses(skill, job_title)
-            await asyncio.sleep(1.5)  # delay to avoid rate limit
-
-            coursera = await fetch_coursera_courses(skill, job_title)
-            await asyncio.sleep(1.5)  # delay to avoid rate limit
-
-            udemy = await fetch_udemy_courses(skill, job_title)
-            await asyncio.sleep(1.5)  # delay to avoid rate limit
-
-            all_courses.extend(yt + coursera + udemy)
-        except Exception as e:
-            print(f"Failed to fetch courses for {skill}: {str(e)}")
+    recommended_courses = await fetch_all_courses(skill_gaps, total_limit=15)
 
     return {
-        "recommended_courses": all_courses
+        "recommended_courses": recommended_courses
     }
+@app.post("/recommend_jobs/")
+async def recommend_jobs(user_id: str = Form(...)):
+    
+    if user_id not in USER_SKILL_DB:
+        raise HTTPException(status_code=404, detail="No skill data found for this user.")
+
+    skills = list(USER_SKILL_DB[user_id]["skills"])  
+    job_results = []
+
+    for skill in skills:
+        try:
+            jobs = await fetch_combined_jobs(skill)  # ✅ Await the coroutine
+            job_results.extend(jobs)
+        except Exception as e:
+            print(f"Error fetching jobs for skill {skill}: {str(e)}")
+
+    return {"recommended_jobs": job_results}  # ✅ Now it's serializable

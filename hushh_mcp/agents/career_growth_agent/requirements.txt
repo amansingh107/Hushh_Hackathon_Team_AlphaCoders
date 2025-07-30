@@ -13,3 +13,5 @@ skillNer
 ipython
 spacy
 PyMuPDF
+keybert
+dotenv
