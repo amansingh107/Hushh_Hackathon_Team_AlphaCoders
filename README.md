@@ -1,180 +1,170 @@
-# 🤫 Hushh AI Consent Protocol (HushhMCP)
+# 🧠 Career Growth Agent
 
-Welcome to the official Python implementation of the **HushhMCP** — a programmable trust and consent protocol for AI agents. This repo powers the agentic infrastructure for the **Hushh PDA Hackathon**, where real humans give real consent to AI systems acting on their behalf.
+The **Career Growth Agent** is an intelligent, consent-based recommendation system built using FastAPI and React. It enables users to:
 
-> 🔐 Built with privacy, security, modularity, and elegance in mind.
+* **Upload professional profiles** (LinkedIn `.zip`, Resume `.pdf`, GitHub username)
+* **Parse and extract skills & experience**
+* **Analyze skill gaps** against a job role by fetching real job descriptions
+* **Receive personalized job recommendations** from external APIs (e.g., Adzuna)
+* All actions are protected via a **token-based consent mechanism**
 
----
-
-## 🧠 What is HushhMCP?
-
-HushhMCP (Hushh Micro Consent Protocol) is the cryptographic backbone for **Personal Data Agents (PDAs)** that can:
-
-- 🔐 Issue & verify **cryptographically signed consent tokens**
-- 🔁 Delegate trust across **agent-to-agent (A2A) links**
-- 🗄️ Store & retrieve **AES-encrypted personal data**
-- 🤖 Operate within well-scoped, revocable, user-issued permissions
-
-Inspired by biology (operons), economics (trust-based contracts), and real-world privacy laws.
+The agent integrates various NLP, scraping, and parsing techniques to extract meaningful career data and support proactive, skill-oriented job recommendations.
 
 ---
 
-## 🏗️ Key Concepts
+## 🚀 Features
 
-| Concept         | Description                                                                 |
-|-----------------|-----------------------------------------------------------------------------|
-| **Consent Token** | A signed proof that a user granted an agent a specific permission          |
-| **TrustLink**     | A time-bound signed relationship between two agents                        |
-| **Vault**         | An encrypted datastore with AES-256-GCM for storing user data              |
-| **Operons**       | Reusable, modular agent actions — like genes in biology                    |
-| **Agents**        | Modular, scoped AI workers that operate on your behalf, with your consent  |
+- 🔍 Extract skills/experience from LinkedIn, GitHub, and Resume
+- 🧠 Analyze job descriptions and compare against user skills
+- 📊 Recommend jobs from public APIs (e.g., Adzuna)
+- 🔐 Built-in consent and token validation system for each action
+- ⚙️ Modular agents for parsing and analyzing
 
 ---
 
-## 📦 Folder Structure
+## 🛠️ Getting Started
+
+### 1. Clone the Repo
 
 ```bash
-hushh-ai-consent-protocol/
-├── hushh_mcp/                # Core protocol logic (modular)
-│   ├── config.py             # .env loader + global settings
-│   ├── constants.py          # Consent scopes, prefixes, default values
-│   ├── types.py              # Pydantic models: ConsentToken, TrustLink, VaultRecord
-│   ├── consent/token.py      # issue_token(), validate_token(), revoke_token()
-│   ├── trust/link.py         # TrustLink creation + verification
-│   ├── vault/encrypt.py      # AES-256-GCM encryption/decryption
-│   ├── agents/               # Real & sample agents
-│   │   ├── shopping.py       # Uses consent to fetch personalized deals
-│   │   └── identity.py       # Validates email + issues TrustLink
-│   ├── operons/verify_email.py  # Reusable email validation logic
-│   └── cli/generate_agent.py    # CLI to scaffold new agents
-├── tests/                   # All pytest test cases
-├── .env.example            # Sample environment variables
-├── requirements.txt        # All runtime + dev dependencies
-├── README.md               # You are here
-└── docs/                   # Hackathon + protocol documentation
-````
+git clone https://github.com/yourusername/career-growth-agent.git
+cd career-growth-agent
+```
 
----
-
-## 🚀 Getting Started
-
-### 1. 📥 Clone & Install
+### 2. Set Up Backend
 
 ```bash
-git clone https://github.com/yourname/hushh-ai-consent-protocol.git
-cd hushh-ai-consent-protocol
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 2. 🔐 Configure Secrets
-
-Create your `.env` file:
+### 3. Run FastAPI Backend
 
 ```bash
-cp .env.example .env
+uvicorn main:app --reload
 ```
 
-And paste in secure keys (generated via `python -c "import secrets; print(secrets.token_hex(32))"`).
+This will start the API server at `http://127.0.0.1:8000`
+
+### 4. Frontend Setup (React + Vite)
+
+```bash
+cd ui
+npm install
+npm run dev
+```
+
+UI runs at `http://localhost:5173` by default
 
 ---
 
-## 🧪 Running Tests
+## ⚙️ API Endpoints
 
-```bash
-pytest
-```
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/upload_linkedin/` | POST | Upload and parse LinkedIn archive (`.zip`) |
+| `/resume/` | POST | Upload and parse Resume (`.pdf`) |
+| `/parse_github/` | POST | Analyze GitHub profile for tech skills |
+| `/analyze_skill_gap/` | POST | Compare your skills with job requirements |
+| `/recommend_jobs/` | POST | Get personalized job recommendations |
 
-Includes full test coverage for:
-
-* Consent issuance, validation, revocation
-* TrustLink creation, scope checks
-* Vault encryption roundtrip
-* Real agent workflows (e.g. shopping, identity)
-
----
-
-## ⚙️ CLI Agent Generator
-
-Scaffold a new agent with:
-
-```bash
-python hushh_mcp/cli/generate_agent.py finance-assistant
-```
-
-Outputs:
-
-```bash
-hushh_mcp/agents/finance_assistant/index.py
-hushh_mcp/agents/finance_assistant/manifest.py
-```
+⚠️ **Note:** Consent tokens are issued on uploads and validated internally by agents.
 
 ---
 
-## 🤖 Sample Agents
+## 🧪 Sample Usage Flow
 
-### 🛍️ `agent_shopper`
-
-* Requires: `vault.read.email`
-* Returns personalized product recommendations
-
-### 🪪 `agent_identity`
-
-* Validates user email
-* Issues TrustLink to other agents with scoped delegation
+1. **Enter User ID**
+2. **Upload either:**
+   * LinkedIn archive
+   * Resume
+   * GitHub username
+3. **Analyze a job title** for skill gap
+4. **Receive recommended jobs** that match your profile
 
 ---
 
-## 🔐 Security Architecture
+## 📁 Project Structure
 
-* All **tokens and trust links are stateless + signed** using HMAC-SHA256
-* Vault data is **encrypted using AES-256-GCM**, with IV + tag integrity
-* Agent actions are **fully gated by scope + revocation checks**
-* System is **testable, auditable, and modular**
+```
+career-growth-agent/
+├── hushh_mcp/
+│   └── agents/
+│       └── career_growth_agent/
+│           ├── career.py
+│           ├── linkedin.py
+│           ├── resume.py
+│           ├── github.py
+│           ├── skills_gap.py
+│           ├── job_fetcher.py
+│           └── job_recommender.py
+├── ui/
+│   ├── components/
+│   │   ├── UploadResume.jsx
+│   │   ├── UploadLinkedIn.jsx
+│   │   ├── ParseGithub.jsx
+│   │   ├── AnalyzeSkillGap.jsx
+│   │   └── RecommendJobs.jsx
+│   ├── App.jsx
+│   ├── main.jsx
+│   └── App.css
+├── main.py
+├── requirements.txt
+├── vite.config.js
+└── README.md
+```
+
+---
+
+## 🔐 Consent Handling
+
+* Tokens are **issued** on file uploads and stored internally
+* Tokens are **validated** inside agents (e.g., `CareerGrowthAgent`, `SkillAnalyzerAgent`)
+* The UI does **not need to send tokens**; they are auto-managed by backend agents
+
+---
+
+## 🚀 Technology Stack
+
+- **Backend:** FastAPI, Python, NLP Libraries
+- **Frontend:** React, Vite, JavaScript
+- **APIs:** Adzuna Jobs API, GitHub API
+- **Security:** Token-based consent validation
+- **Architecture:** Modular agent-based system
+
+---
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 👨‍💻 Maintainer
+
+**Aman Singh**
+- 📧 Email: `amansingh@example.com`
+- 💼 LinkedIn: [linkedin.com/in/yourprofile](https://linkedin.com/in/yourprofile)
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ---
 
 ## 📚 Documentation
 
-Explore full guides in `/docs`:
-
-* `docs/index.md` — Overview & roadmap
-* `docs/consent.md` — Consent token lifecycle
-* `docs/agents.md` — Building custom agents
-* `docs/faq.md` — Hackathon questions
-* `docs/manifesto.md` — Design philosophy
+For detailed API documentation, visit `http://127.0.0.1:8000/docs` when running the FastAPI server.
 
 ---
 
-## 💡 Roadmap
+## ⭐ Show your support
 
-* [ ] Add persistent TrustLink registry (e.g. Redis)
-* [ ] Extend scope framework for write-level permissions
-* [ ] Launch Open Agent Directory
-* [ ] Release SDKs for iOS and Android
-
----
-
-## 🏁 Built For: Hushh PDA Hackathon
-
-* 🎓 Hosted in collaboration with DAV Team and Analytics Club, IIT Bombay
-* 💰 INR 1,70,000+ prize pool
-* 👩‍💻 Real-world AI agents
-* 🚀 Build the infrastructure for programmable trust
-
----
-
-## 🫱🏽‍🫲 Contributing
-
-* Fork → Build → Pull Request
-* Add a test for every feature
-* Run `pytest` before submitting
-
----
-
-## ⚖️ License
-
-MIT — open to the world.
-
-Let’s build a better agentic internet together.
-
-```
+Give a ⭐️ if this project helped you!
