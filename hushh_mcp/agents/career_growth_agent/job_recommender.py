@@ -113,8 +113,8 @@ async def fetch_combined_jobs(skill: str, total_limit: int = 30) -> List[Dict]:
     adzuna_limit = total_limit - jsearch_limit - linkedin_limit
 
     tasks = [
-        fetch_jobs_jsearch(skill, jsearch_limit),
-        fetch_jobs_linkedin(linkedin_limit),
+        # fetch_jobs_jsearch(skill, jsearch_limit),
+        # fetch_jobs_linkedin(linkedin_limit),
         fetch_jobs_adzuna(adzuna_limit),
     ]
 

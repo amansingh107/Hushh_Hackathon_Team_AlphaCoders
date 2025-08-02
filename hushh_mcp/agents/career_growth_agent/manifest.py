@@ -1,16 +1,23 @@
 # hushh_mcp/agents/career_growth_agent/manifest.py
-manifest = {
-    "name": "Career Growth Agent",
-    "version": "1.0.0",
-    "description": "Analyzes LinkedIn data to recommend career paths and learning resources",
-    "entry_point": "index:app",
-    "consent_scopes": [
-        {
-            "name": "custom.linkedin.upload",
-            "description": "Access exported LinkedIn data to analyze your skills and experience"
-        }
-    ]
-}
+# hushh_mcp/agents/career_growth_agent/manifest.py
+
+manifest = [
+    {
+        "id": "agent_skill_gap",
+        "name": "Skill Gap Analyzer",
+        "description": "Analyzes missing skills from user's resume, LinkedIn or GitHub for a given job title.",
+        "scopes": ["custom.linkedin.upload", "custom.resume.upload", "custom.temporary"],
+        "version": "0.1.0"
+    },
+    {
+        "id": "agent_job_recommender",
+        "name": "Job Recommender",
+        "description": "Recommends jobs using extracted user skills by fetching real-time postings.",
+        "scopes": ["custom.temporary"],
+        "version": "0.1.0"
+    }
+]
+    
 
 # This manifest defines the Career Growth Agent, which is responsible for analyzing user data
 # and providing recommendations for career advancement. It requires access to the user's profile,

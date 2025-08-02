@@ -10,7 +10,7 @@ class CareerGrowthAgent:
     Extracts skills and experience from LinkedIn data after verifying consent.
     """
 
-    required_scope = ConsentScope.CUSTOM_LINKEDIN_UPLOAD
+    required_scope = ConsentScope.CUSTOM_TEMPORARY
 
     def __init__(self, agent_id: str = "agent_career_growth"):
         self.agent_id = agent_id

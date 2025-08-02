@@ -3,120 +3,100 @@ import httpx
 import asyncio
 from typing import List, Dict
 
+import asyncio
+import httpx
+import os
+from typing import List, Dict
 # === ✅ API Keys ===
-GOOGLE_API_KEY = os.getenv("YOUTUBE_API_KEY", "your-google-api-key")
-RAPIDAPI_KEY = "3e5f2f4104msh339df466f6ee521p13c1e2jsn5c2c837525d6"
+RAPIDAPI_KEY = "a43d7864c4msh8b60316af0d6629p115275jsn7f45da6ced7c"
 
-# === ✅ YouTube ===
-async def fetch_youtube_courses(skill: str) -> List[Dict]:
-    query = f"{skill} tutorial"
-    url = (
-        f"https://www.googleapis.com/youtube/v3/search?"
-        f"part=snippet&q={query}&type=video&maxResults=5&key={GOOGLE_API_KEY}"
-    )
 
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.get(url)
-            response.raise_for_status()
-            data = response.json()
-        except Exception as e:
-            print(f"⚠️ YouTube error for '{skill}': {e}")
-            return []
+# Load your RapidAPI key from environment or fallback
+# RapidAPI hosts
+UD_HOST = "udemy-api2.p.rapidapi.com"
+CO_HOST = "collection-for-coursera-courses.p.rapidapi.com"
 
-    results = []
-    for item in data.get("items", []):
-        video_id = item["id"].get("videoId")
-        title = item["snippet"].get("title")
-        if video_id and title:
-            results.append({
-                "platform": "YouTube",
-                "title": title,
-                "url": f"https://www.youtube.com/watch?v={video_id}",
-                "skill": skill
-            })
 
-    return results
 
-# === ✅ Udemy ===
+# ✅ FIXED: Udemy using search endpoint
 async def fetch_udemy_courses(skill: str) -> List[Dict]:
-    url = f"https://udemy-api2.p.rapidapi.com/v1/udemy/category/{skill.lower()}"
+    query = skill.lower().replace(" ", "%20")
+    url = f"https://{UD_HOST}/v1/udemy/search/{query}"
+
     headers = {
-        "content-type": "application/json",
-        "x-rapidapi-host": "udemy-api2.p.rapidapi.com",
-        "x-rapidapi-key": RAPIDAPI_KEY,
-    }
-    payload = {
-        "page": 1,
-        "page_size": 5,
-        "sort": "popularity",
-        "locale": "en_US",
-        "extract_pricing": True
+        "Content-Type": "application/json",
+        "X-RapidAPI-Host": UD_HOST,
+        "X-RapidAPI-Key": RAPIDAPI_KEY
     }
 
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.post(url, headers=headers, json=payload)
-            if response.status_code == 429:
-                print(f"⚠️ Udemy rate limited for '{skill}'")
-                return []
-            response.raise_for_status()
-            data = response.json()
+            resp = await client.get(url, headers=headers)
+            resp.raise_for_status()
+            data = resp.json()
         except Exception as e:
             print(f"⚠️ Udemy error for '{skill}': {e}")
             return []
 
     if not isinstance(data, dict):
-        print(f"⚠️ Udemy response not a dict for '{skill}': {type(data)}")
+        print(f"⚠️ Udemy response not dict for '{skill}': {type(data)}")
         return []
 
-    results = []
-    for course in data.get("data", [])[:5]:
-        title = course.get("title") or f"{skill} Course"
-        course_url = course.get("url") or ""
-        results.append({
+    courses = []
+    for item in data.get("courses", [])[:3]:
+        courses.append({
             "platform": "Udemy",
-            "title": title,
-            "url": f"https://www.udemy.com{course_url}",
+            "title": item.get("title"),
+            "url": item.get("url"),
             "skill": skill
         })
+    return courses
 
-    return results
+
+# ✅ FIXED: Coursera response handling
 async def fetch_coursera_courses(skill: str) -> List[Dict]:
-    url = "https://collection-for-coursera-courses.p.rapidapi.com/rapidapi/course/get_institution.php"
+    url = f"https://{CO_HOST}/rapidapi/course/get_institution.php"
     headers = {
-        "x-rapidapi-host": "collection-for-coursera-courses.p.rapidapi.com",
-        "x-rapidapi-key": RAPIDAPI_KEY,
+        "X-RapidAPI-Host": CO_HOST,
+        "X-RapidAPI-Key": RAPIDAPI_KEY
+    }
+    params = {
+        "institution": "coursera",
+        "skill": skill
     }
 
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.get(url, headers=headers)
-            response.raise_for_status()
-            data = response.json()
+            resp = await client.get(url, headers=headers, params=params)
+            resp.raise_for_status()
+            data = resp.json()
         except Exception as e:
             print(f"⚠️ Coursera error for '{skill}': {e}")
             return []
 
-    if not isinstance(data, list):  # Fix here
-        print(f"⚠️ Coursera response not a list for '{skill}': {type(data)}")
-        return []
+    courses = []
+    if isinstance(data, list):  # handle raw list
+        for item in data[:3]:
+            courses.append({
+                "platform": "Coursera",
+                "title": item.get("name", f"{skill} Course"),
+                "url": item.get("url", "https://www.coursera.org"),
+                "skill": skill
+            })
+    elif isinstance(data, dict):
+        for item in data.get("data", [])[:3]:
+            courses.append({
+                "platform": "Coursera",
+                "title": item.get("name", f"{skill} Course"),
+                "url": item.get("url", "https://www.coursera.org"),
+                "skill": skill
+            })
+    else:
+        print(f"⚠️ Coursera unknown response format for '{skill}': {type(data)}")
 
-    results = []
-    for item in data[:5]:
-        title = item if isinstance(item, str) else item.get("title", f"{skill} Course")
-        course_url = "https://www.coursera.org"
-        results.append({
-            "platform": "Coursera",
-            "title": title,
-            "url": course_url,
-            "skill": skill
-        })
+    return courses
 
-    return results
-
-
-# === ✅ Main Aggregator ===
+# === ✅ Combined Course Recommender ===
 async def fetch_all_courses(skill_gaps: List[str], total_limit: int = 15) -> List[Dict]:
     all_courses = []
     seen = set()
@@ -127,12 +107,12 @@ async def fetch_all_courses(skill_gaps: List[str], total_limit: int = 15) -> Lis
 
         combined = []
 
-        # try:
-        #     yt = await fetch_youtube_courses(skill)
-        #     await asyncio.sleep(1)
-        #     combined.extend(yt)
-        # except Exception as e:
-        #     print(f"⚠️ YouTube fetch failed for '{skill}': {e}")
+        try:
+            udemy = await fetch_udemy_courses(skill)
+            await asyncio.sleep(1)
+            combined.extend(udemy)
+        except Exception as e:
+            print(f"⚠️ Udemy fetch failed for '{skill}': {e}")
 
         try:
             coursera = await fetch_coursera_courses(skill)
@@ -140,13 +120,6 @@ async def fetch_all_courses(skill_gaps: List[str], total_limit: int = 15) -> Lis
             combined.extend(coursera)
         except Exception as e:
             print(f"⚠️ Coursera fetch failed for '{skill}': {e}")
-
-        # try:
-        #     udemy = await fetch_udemy_courses(skill)
-        #     await asyncio.sleep(1)
-        #     combined.extend(udemy)
-        # except Exception as e:
-        #     print(f"⚠️ Udemy fetch failed for '{skill}': {e}")
 
         for course in combined:
             key = (course["platform"], course["title"])
@@ -157,6 +130,3 @@ async def fetch_all_courses(skill_gaps: List[str], total_limit: int = 15) -> Lis
                 break
 
     return all_courses
-
-
-#https://chatgpt.com/share/6883d6b1-5cb4-800b-bbf3-7b37599e9453
